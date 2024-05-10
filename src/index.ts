@@ -4,6 +4,7 @@ import {
   PrivateKeyAccount,
   http,
   createWalletClient,
+  createPublicClient,
   custom,
   getContract,
   toBytes,
@@ -58,8 +59,8 @@ export class OpenDataLibrary {
       chain,
       transport: privateKeyAccount
         ? http()
-        : window.ethereum
-        ? custom(window.ethereum)
+        : window?.ethereum
+        ? custom(window?.ethereum)
         : http(),
     });
     this.privateKeyAccount = privateKeyAccount;
@@ -70,11 +71,52 @@ export class OpenDataLibrary {
     });
   }
 
-  addNewUser(userAddress: Address): Promise<WriteContractReturnType> {
-    return this.userAnalyticsContract.write.addUser([userAddress]);
+  public async getAccount() {
+    let account;
+    if (this.privateKeyAccount) {
+      account = this.privateKeyAccount;
+    } else {
+      const accounts = await this.walletClient.getAddresses();
+      account = { address: accounts[0] } as PrivateKeyAccount;
+    }
+    return account;
   }
 
-  createSchema(
+  public async addNewUser(
+    userAddress: Address
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+      return this.userAnalyticsContract.write.addUser([userAddress], {
+        account: account.address,
+      });
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  public async swithChain() {
+    const walletChainId = await this.walletClient.getChainId();
+    if (walletChainId !== this.chain.id) {
+      try {
+        await this.walletClient.switchChain({
+          id: this.chain.id,
+        });
+      } catch (error: any) {
+        if (error?.code !== 4001) {
+          await this.walletClient.addChain({
+            chain: this.chain,
+          });
+          await this.walletClient.switchChain({
+            id: this.chain.id,
+          });
+        }
+      }
+    }
+  }
+
+  async createSchema(
     schemaName: string,
     columns: string[],
     category: Category
@@ -94,17 +136,21 @@ export class OpenDataLibrary {
         })
       );
 
-      return this.userAnalyticsContract.write.addSchema([
-        schemaNameSerialized,
-        columnSerialized,
-        category,
-      ]);
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.userAnalyticsContract.write.addSchema(
+        [schemaNameSerialized, columnSerialized, category],
+        {
+          account: account.address,
+        }
+      );
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  addAnalytics(
+  async addAnalytics(
     userAddress: Address,
     schemaName: string,
     columns: string[],
@@ -125,18 +171,21 @@ export class OpenDataLibrary {
         })
       );
 
-      return this.userAnalyticsContract.write.addAnalytics([
-        userAddress,
-        schemaNameSerialized,
-        columnSerialized,
-        data,
-      ]);
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.userAnalyticsContract.write.addAnalytics(
+        [userAddress, schemaNameSerialized, columnSerialized, data],
+        {
+          account: account,
+        }
+      );
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  updateAnalytics(
+  async updateAnalytics(
     userAddress: Address,
     schemaName: string,
     columns: string[],
@@ -157,12 +206,15 @@ export class OpenDataLibrary {
         })
       );
 
-      return this.userAnalyticsContract.write.updateAnalytics([
-        userAddress,
-        schemaNameSerialized,
-        columnSerialized,
-        data,
-      ]);
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.userAnalyticsContract.write.updateAnalytics(
+        [userAddress, schemaNameSerialized, columnSerialized, data],
+        {
+          account: account,
+        }
+      );
     } catch (e) {
       throw new Error(String(e));
     }
