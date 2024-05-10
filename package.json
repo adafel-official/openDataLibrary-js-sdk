@@ -1,0 +1,41 @@
+{
+  "name": "@adafel/opendatalibrary-js-sdk",
+  "version": "0.1.0",
+  "description": "Javascript sdk for interaction with Open Data Library protocol. ",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pub": "npm run build && npm publish"
+  },
+  "keywords": [
+    "adafel",
+    "open",
+    "data",
+    "library",
+    "web3"
+  ],
+  "author": "Adafel Inc.",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/adafel-official/openDataLibrary-js-sdk"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "rollup": "^4.17.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
+  },
+  "peerDependencies": {
+    "viem": ">=2.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
