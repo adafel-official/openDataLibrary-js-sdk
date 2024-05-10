@@ -15,7 +15,7 @@ import {
 import { ODLClientOptions } from "./types";
 import abiJson from "./abi/UserAnalytics.json";
 
-enum Category {
+export enum Category {
   Gaming = 0,
   Marketplace,
   Defi,
