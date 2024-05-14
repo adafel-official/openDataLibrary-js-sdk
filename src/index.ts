@@ -36,16 +36,16 @@ export class OpenDataLibrary {
 
   constructor({ rpcUrl: rpc, account: privateKeyAccount }: ODLClientOptions) {
     const chain = {
-      id: 22068238331863,
-      name: "odlSubnet",
+      id: 1849857664505656,
+      name: "Adafel Testnet Network",
       nativeCurrency: {
-        name: "Open Data Library Token",
-        symbol: "ODL",
+        name: "Analyze Token",
+        symbol: "ALY",
         decimals: 18,
       },
       rpcUrls: {
         default: {
-          http: [rpc ? rpc : "https://testnet-rpc.adafel.com"],
+          http: ["https://testnet-rpc.adafel.com"],
         },
       },
     };
