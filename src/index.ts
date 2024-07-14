@@ -14,7 +14,7 @@ import {
   ReadContractReturnType,
 } from "viem";
 import { ODLClientOptions } from "./types";
-import abiJson from "./abi/UserAnalytics.json";
+import abiJson from "./abi/ODL.json";
 
 export enum Category {
   Gaming = 0,
@@ -29,7 +29,7 @@ export enum Category {
 export class OpenDataLibrary {
   public walletClient: WalletClient;
   public publicClient!: PublicClient;
-  public userAnalyticsContract: any;
+  public odlContract: any;
   public privateKeyAccount?: PrivateKeyAccount;
   public chain: any;
   public account!: { address: `0x${string}` };
@@ -39,8 +39,8 @@ export class OpenDataLibrary {
       id: 1849857664505656,
       name: "Adafel Testnet Network",
       nativeCurrency: {
-        name: "Analyze Token",
-        symbol: "ALY",
+        name: "Adafel Token",
+        symbol: "ADFL",
         decimals: 18,
       },
       rpcUrls: {
@@ -64,9 +64,9 @@ export class OpenDataLibrary {
         : http(),
     });
     this.privateKeyAccount = privateKeyAccount;
-    this.userAnalyticsContract = getContract({
+    this.odlContract = getContract({
       abi: abiJson.abi,
-      address: "0xbe7D63fDeE3c849faDCea8710317DE854d723C0d",
+      address: "0xE53Ad25f546F36DB8E39b4440d449EB875C2bdAA",
       client: { wallet: this.walletClient, public: this.publicClient },
     });
   }
@@ -80,20 +80,6 @@ export class OpenDataLibrary {
       account = { address: accounts[0] } as PrivateKeyAccount;
     }
     return account;
-  }
-
-  public async addNewUser(
-    userAddress: Address
-  ): Promise<WriteContractReturnType | Error> {
-    try {
-      const account = await this.getAccount();
-      await this.swithChain();
-      return this.userAnalyticsContract.write.addUser([userAddress], {
-        account: account.address,
-      });
-    } catch (e) {
-      throw new Error(String(e));
-    }
   }
 
   public async swithChain() {
@@ -116,10 +102,11 @@ export class OpenDataLibrary {
     }
   }
 
-  async createSchema(
+  async addData(
     schemaName: string,
     columns: string[],
-    category: Category
+    category: Category,
+    data: bigint[][]
   ): Promise<WriteContractReturnType | Error> {
     try {
       const columnSerialized = columns.map((c) => {
@@ -130,17 +117,11 @@ export class OpenDataLibrary {
         );
       });
 
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
-
       const account = await this.getAccount();
       await this.swithChain();
 
-      return this.userAnalyticsContract.write.addSchema(
-        [schemaNameSerialized, columnSerialized, category],
+      return this.odlContract.write.addOnChainData(
+        [schemaName, columnSerialized, category, data],
         {
           account: account.address,
         }
@@ -150,32 +131,17 @@ export class OpenDataLibrary {
     }
   }
 
-  async addAnalytics(
-    userAddress: Address,
-    schemaName: string,
-    columns: string[],
-    data: bigint[]
+  async trainLinearRegressionOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
   ): Promise<WriteContractReturnType | Error> {
     try {
-      const columnSerialized = columns.map((c) => {
-        return toHex(
-          toBytes(String(c), {
-            size: 32,
-          })
-        );
-      });
-
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
-
       const account = await this.getAccount();
       await this.swithChain();
 
-      return this.userAnalyticsContract.write.addAnalytics(
-        [userAddress, schemaNameSerialized, columnSerialized, data],
+      return this.odlContract.write.trainLinearRegressionOffChainData(
+        [data, label, modelName],
         {
           account: account,
         }
@@ -185,32 +151,34 @@ export class OpenDataLibrary {
     }
   }
 
-  async updateAnalytics(
-    userAddress: Address,
-    schemaName: string,
-    columns: string[],
-    data: bigint[]
+  async predictLinearRegressionOnchainModel(
+    modelName: string,
+    data: bigint[][]
   ): Promise<WriteContractReturnType | Error> {
     try {
-      const columnSerialized = columns.map((c) => {
-        return toHex(
-          toBytes(String(c), {
-            size: 32,
-          })
-        );
-      });
-
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
-
       const account = await this.getAccount();
       await this.swithChain();
 
-      return this.userAnalyticsContract.write.updateAnalytics(
-        [userAddress, schemaNameSerialized, columnSerialized, data],
+      return this.odlContract.read.predictLinearRegressionOnchainModel([
+        modelName,
+        data,
+      ]);
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  async trainLogisticRegressionOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainLogisticRegressionOffChainData(
+        [data, label, modelName],
         {
           account: account,
         }
@@ -220,121 +188,240 @@ export class OpenDataLibrary {
     }
   }
 
-  getAggregateActivityData(): Promise<ReadContractReturnType> {
-    return this.userAnalyticsContract.read.getUserActivityMatrix();
-  }
-
-  getSchemaList(): Promise<ReadContractReturnType> {
-    return this.userAnalyticsContract.read.getAllSchemas();
-  }
-
-  getSchemaData(schemaName: string): Promise<ReadContractReturnType | Error> {
+  async predictLogisticRegressionOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
     try {
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
+      const account = await this.getAccount();
+      await this.swithChain();
 
-      return this.userAnalyticsContract.read.getAnalyticsDataBySchemaName([
-        schemaNameSerialized,
+      return this.odlContract.read.predictLogisticRegressionOnchainModel([
+        modelName,
+        data,
       ]);
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  getSchemaColumns(
-    schemaName: string
-  ): Promise<ReadContractReturnType | Error> {
+  async trainKNNRegressionOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
     try {
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
+      const account = await this.getAccount();
+      await this.swithChain();
 
-      return this.userAnalyticsContract.read.getColumnsOfSchema([
-        schemaNameSerialized,
+      return this.odlContract.write.trainKNNRegressionOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  async predictKNNRegressionOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictKNNRegressionOnchainModel([
+        modelName,
+        data,
       ]);
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  getSchemaUserId(
-    schemaName: string,
-    userAddress: Address
-  ): Promise<ReadContractReturnType | Error> {
+  async trainKNNClassificationOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
     try {
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
+      const account = await this.getAccount();
+      await this.swithChain();
 
-      return this.userAnalyticsContract.read.getSchemaAddressToId([
-        schemaNameSerialized,
-        userAddress,
+      return this.odlContract.write.trainKNNClassificationOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  async predictKNNClassificationOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictKNNClassificationOnchainModel([
+        modelName,
+        data,
       ]);
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  getSchemaUserAddress(
-    schemaName: string,
-    userId: bigint
-  ): Promise<ReadContractReturnType | Error> {
+  async trainDecisionTreeRegressionOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
     try {
-      const schemaNameSerialized = toHex(
-        toBytes(schemaName, {
-          size: 32,
-        })
-      );
+      const account = await this.getAccount();
+      await this.swithChain();
 
-      return this.userAnalyticsContract.read.getSchemaIdToAddress([
-        schemaNameSerialized,
-        userId,
+      return this.odlContract.write.trainDecisionTreeRegressionOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  async predictDecisionTreeRegressionOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictDecisionTreeRegressionOnchainModel([
+        modelName,
+        data,
       ]);
     } catch (e) {
       throw new Error(String(e));
     }
   }
 
-  getUserId(userAddress: Address): Promise<ReadContractReturnType> {
-    return this.userAnalyticsContract.read.addressToId([userAddress]);
+  async trainDecisionTreeClassificationOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainDecisionTreeClassificationOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 
-  getUserAddress(userId: bigint): Promise<ReadContractReturnType> {
-    return this.userAnalyticsContract.read.idToAddress([userId]);
+  async predictDecisionTreeClassificationOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictDecisionTreeClassificationOnchainModel(
+        [modelName, data]
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 
-  getCredits(address: Address): Promise<ReadContractReturnType> {
-    return this.userAnalyticsContract.read.consumerCredits([address]);
+  async trainRandomForestRegressionOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainRandomForestRegressionOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 
-  getCategoriesEnums() {
-    return {
-      Gaming: 0,
-      Marketplace: 1,
-      Defi: 2,
-      Dao: 3,
-      Web3Social: 4,
-      Identity: 5,
-      Certificates: 6,
-    };
+  async predictRandomForestRegressionOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictRandomForestRegressionOnchainModel([
+        modelName,
+        data,
+      ]);
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 
-  getCategoriesList() {
-    return [
-      "Gaming",
-      "Marketplace",
-      "Defi",
-      "Dao",
-      "Web3Social",
-      "Identity",
-      "Certificates",
-    ];
+  async trainRandomForestClassificationOffChainData(
+    data: bigint[][],
+    label: bigint[],
+    modelName: string
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainRandomForestClassificationOffChainData(
+        [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  async predictRandomForestClassificationOnchainModel(
+    modelName: string,
+    data: bigint[][]
+  ): Promise<WriteContractReturnType | Error> {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.read.predictRandomForestClassificationOnchainModel(
+        [modelName, data]
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 }
