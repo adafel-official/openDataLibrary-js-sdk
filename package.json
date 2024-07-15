@@ -25,13 +25,15 @@
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "rollup": "^4.17.2",
-    "@rollup/plugin-json": "^6.1.0",
     "rollup-plugin-typescript2": "^0.36.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@types/dataframe-js": "^1.4.3",
+    "dataframe-js": "^1.4.4",
     "tslib": "^2.6.2"
   },
   "peerDependencies": {

@@ -34,37 +34,48 @@ const client = new OpenDataLibrary({
 
 Note: if the private key is not supplied then sdk will use provider from `window.ethereum`.
 
-2. Create a new schema
+2. Reading Data from CSV
+   You can read data from a CSV file and format it for use with the library:
 
-```
-await client.createSchema(
-  "demo schema",
-  ["col1", "col2", "col3"],
-  Category.Gaming
+```javascript
+const csvPath = "./data.csv";
+const inputColumns = ["column1", "column2"];
+const labelColumn = "label";
+
+const [inputData, labels] = await odl.getDataFromCSV(
+  csvPath,
+  inputColumns,
+  labelColumn
 );
 ```
 
-Return: transaction hash (type `0x${string}`).
+3. Adding Data to the Blockchain
+   To add data to the blockchain, use the `addData` method:
 
-3. Add user analytics
+```javascript
+const schemaName = "MySchema";
+const columns = ["column1", "column2"];
+const category = Category.Gaming;
+const data = inputData;
 
+await odl.addData(schemaName, columns, category, data);
 ```
-await client.addAnalytics(
-  "0x264f9...",
-  "demo schema",
-  ["columnName1", "columnName2", "columnName3"],
-  [1n, 2n, 3n] // adding sample data
+
+4. Training a Model
+   You can train different models using the provided methods. For example, to train a linear regression model:
+
+```javascript
+const modelName = "MyLinearRegressionModel";
+
+await odl.trainLinearRegressionOffChainData(inputData, labels, modelName);
+```
+
+5. Making Predictions
+   To make predictions using a trained model:
+
+```javascript
+const predictions = await odl.predictLinearRegressionOnchainModel(
+  modelName,
+  inputData
 );
 ```
-
-Return: transaction hash (type `0x${string}`).
-
-4. Get all the analytics under the particular schema.
-
-```
-await client.getSchemaData(
-  "demo schema",
-)
-```
-
-Return: `bigint[][]`

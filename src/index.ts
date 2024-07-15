@@ -15,6 +15,7 @@ import {
 } from "viem";
 import { ODLClientOptions } from "./types";
 import abiJson from "./abi/ODL.json";
+import DataFrame from "dataframe-js";
 
 export enum Category {
   Gaming = 0,
@@ -26,6 +27,9 @@ export enum Category {
   Certificates,
 }
 
+/**
+ * Class representing the Open Data Library.
+ */
 export class OpenDataLibrary {
   public walletClient: WalletClient;
   public publicClient!: PublicClient;
@@ -34,6 +38,10 @@ export class OpenDataLibrary {
   public chain: any;
   public account!: { address: `0x${string}` };
 
+  /**
+   * Creates an instance of OpenDataLibrary.
+   * @param {ODLClientOptions} options - Options to initialize the library.
+   */
   constructor({ rpcUrl: rpc, account: privateKeyAccount }: ODLClientOptions) {
     const chain = {
       id: 1849857664505656,
@@ -71,6 +79,40 @@ export class OpenDataLibrary {
     });
   }
 
+  /**
+   * Reads data from a CSV file and formats it.
+   * @param {string} csvPath - Path to the CSV file.
+   * @param {string[]} inputColumns - Columns to be used as input.
+   * @param {string} labelColumn - Column to be used as label.
+   * @returns {Promise<[bigint[][], bigint[]]>} Formatted input data and labels.
+   */
+  public async getDataFromCSV(
+    csvPath: string,
+    inputColumns: string[],
+    labelColumn: string
+  ): Promise<[bigint[][], bigint[]]> {
+    let data = await DataFrame.fromCSV(csvPath);
+    let input = data.select(...inputColumns);
+    let labels = data.select(labelColumn);
+    let input_data = input.toArray();
+    input_data = input_data.map((row) =>
+      row.map((col: number) => BigInt(Math.round(col * 10000)))
+    );
+    let labels_array = labels.toArray();
+    let labels_formatted: bigint[] = [];
+    labels_array.map((row) =>
+      row.map((col: number) =>
+        labels_formatted.push(BigInt(Math.round(col * 10000)))
+      )
+    );
+
+    return [input_data, labels_formatted];
+  }
+
+  /**
+   * Retrieves the account information.
+   * @returns {Promise<PrivateKeyAccount>} The account information.
+   */
   public async getAccount() {
     let account;
     if (this.privateKeyAccount) {
@@ -82,6 +124,9 @@ export class OpenDataLibrary {
     return account;
   }
 
+  /**
+   * Switches the chain to the one specified in the configuration.
+   */
   public async swithChain() {
     const walletChainId = await this.walletClient.getChainId();
     if (walletChainId !== this.chain.id) {
@@ -102,6 +147,14 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Adds data to the blockchain.
+   * @param {string} schemaName - The name of the schema.
+   * @param {string[]} columns - The columns of the schema.
+   * @param {Category} category - The category of the data.
+   * @param {bigint[][]} data - The data to be added.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async addData(
     schemaName: string,
     columns: string[],
@@ -131,6 +184,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a linear regression model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainLinearRegressionOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -151,6 +211,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a linear regression model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictLinearRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -168,6 +234,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a logistic regression model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainLogisticRegressionOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -188,6 +261,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a logistic regression model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictLogisticRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -205,6 +284,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a KNN regression model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainKNNRegressionOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -225,6 +311,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a KNN regression model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictKNNRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -242,6 +334,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a KNN classification model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainKNNClassificationOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -262,6 +361,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a KNN classification model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictKNNClassificationOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -279,6 +384,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a decision tree regression model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainDecisionTreeRegressionOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -299,6 +411,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a decision tree regression model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictDecisionTreeRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -316,6 +434,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a decisin tree classification model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainDecisionTreeClassificationOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -336,6 +461,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a decision tree classification model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictDecisionTreeClassificationOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -352,6 +483,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a random forest regression model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainRandomForestRegressionOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -372,6 +510,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a random forest regression model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictRandomForestRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
@@ -389,6 +533,13 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Trains a random forest classification model with off-chain data.
+   * @param {bigint[][]} data - The training data.
+   * @param {bigint[]} label - The training labels.
+   * @param {string} modelName - The name of the model.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
+   */
   async trainRandomForestClassificationOffChainData(
     data: bigint[][],
     label: bigint[],
@@ -409,6 +560,12 @@ export class OpenDataLibrary {
     }
   }
 
+  /**
+   * Makes a prediction using a random forest classification model stored on-chain.
+   * @param {string} modelName - The name of the model.
+   * @param {bigint[][]} data - The data for prediction.
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   */
   async predictRandomForestClassificationOnchainModel(
     modelName: string,
     data: bigint[][]
