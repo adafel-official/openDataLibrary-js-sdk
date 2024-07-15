@@ -90,23 +90,27 @@ export class OpenDataLibrary {
     csvPath: string,
     inputColumns: string[],
     labelColumn: string
-  ): Promise<[bigint[][], bigint[]]> {
-    let data = await DataFrame.fromCSV(csvPath);
-    let input = data.select(...inputColumns);
-    let labels = data.select(labelColumn);
-    let input_data = input.toArray();
-    input_data = input_data.map((row) =>
-      row.map((col: number) => BigInt(Math.round(col * 10000)))
-    );
-    let labels_array = labels.toArray();
-    let labels_formatted: bigint[] = [];
-    labels_array.map((row) =>
-      row.map((col: number) =>
-        labels_formatted.push(BigInt(Math.round(col * 10000)))
-      )
-    );
+  ): Promise<[bigint[][], bigint[]] | Error> {
+    try {
+      let data = await DataFrame.fromCSV(csvPath);
+      let input = data.select(...inputColumns);
+      let labels = data.select(labelColumn);
+      let input_data = input.toArray();
+      input_data = input_data.map((row) =>
+        row.map((col: number) => BigInt(Math.round(col * 10000)))
+      );
+      let labels_array = labels.toArray();
+      let labels_formatted: bigint[] = [];
+      labels_array.map((row) =>
+        row.map((col: number) =>
+          labels_formatted.push(BigInt(Math.round(col * 10000)))
+        )
+      );
 
-    return [input_data, labels_formatted];
+      return [input_data, labels_formatted];
+    } catch (e) {
+      throw new Error(String(e));
+    }
   }
 
   /**
