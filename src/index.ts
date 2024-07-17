@@ -44,7 +44,7 @@ export class OpenDataLibrary {
    */
   constructor({ rpcUrl: rpc, account: privateKeyAccount }: ODLClientOptions) {
     const chain = {
-      id: 1849857664505656,
+      id: 2891731878337135,
       name: "Adafel Testnet Network",
       nativeCurrency: {
         name: "Adafel Token",
@@ -74,7 +74,7 @@ export class OpenDataLibrary {
     this.privateKeyAccount = privateKeyAccount;
     this.odlContract = getContract({
       abi: abiJson.abi,
-      address: "0xE53Ad25f546F36DB8E39b4440d449EB875C2bdAA",
+      address: "0xa3Ac2e1eF37BD77D89f87CFf18b7e7a3177613dA",
       client: { wallet: this.walletClient, public: this.publicClient },
     });
   }
