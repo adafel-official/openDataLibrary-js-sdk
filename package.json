@@ -1,6 +1,6 @@
 {
   "name": "@adafel/opendatalibrary-js-sdk",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Typescript sdk for interaction with Open Data Library protocol. ",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@types/dataframe-js": "^1.4.3",
+    "cids": "^1.1.9",
     "dataframe-js": "^1.4.4",
     "tslib": "^2.6.2"
   },

@@ -16,6 +16,7 @@ import {
 import { ODLClientOptions } from "./types";
 import abiJson from "./abi/ODL.json";
 import DataFrame from "dataframe-js";
+import CID from "cids";
 
 export enum Category {
   Gaming = 0,
@@ -74,7 +75,7 @@ export class OpenDataLibrary {
     this.privateKeyAccount = privateKeyAccount;
     this.odlContract = getContract({
       abi: abiJson.abi,
-      address: "0xa3Ac2e1eF37BD77D89f87CFf18b7e7a3177613dA",
+      address: "0xb67a0654de4a747F51e1298B17eb6D88539Eda20",
       client: { wallet: this.walletClient, public: this.publicClient },
     });
   }
@@ -219,7 +220,7 @@ export class OpenDataLibrary {
    * Makes a prediction using a linear regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
-   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   * @returns {Promise<ReadContractReturnType | Error>} The result of the contract read operation.
    */
   async predictLinearRegressionOnchainModel(
     modelName: string,
@@ -269,7 +270,7 @@ export class OpenDataLibrary {
    * Makes a prediction using a logistic regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
-   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   * @returns {Promise<ReadContractReturnType | Error>} The result of the contract read operation.
    */
   async predictLogisticRegressionOnchainModel(
     modelName: string,
@@ -319,7 +320,7 @@ export class OpenDataLibrary {
    * Makes a prediction using a KNN regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
-   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   * @returns {Promise<ReadContractReturnType | Error>} The result of the contract read operation.
    */
   async predictKNNRegressionOnchainModel(
     modelName: string,
@@ -369,7 +370,7 @@ export class OpenDataLibrary {
    * Makes a prediction using a KNN classification model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
-   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   * @returns {Promise<ReadContractReturnType | Error>} The result of the contract read operation.
    */
   async predictKNNClassificationOnchainModel(
     modelName: string,
@@ -419,7 +420,7 @@ export class OpenDataLibrary {
    * Makes a prediction using a decision tree regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
-   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract read operation.
+   * @returns {Promise<ReadContractReturnType | Error>} The result of the contract read operation.
    */
   async predictDecisionTreeRegressionOnchainModel(
     modelName: string,
@@ -474,7 +475,7 @@ export class OpenDataLibrary {
   async predictDecisionTreeClassificationOnchainModel(
     modelName: string,
     data: bigint[][]
-  ): Promise<WriteContractReturnType | Error> {
+  ): Promise<ReadContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -523,7 +524,7 @@ export class OpenDataLibrary {
   async predictRandomForestRegressionOnchainModel(
     modelName: string,
     data: bigint[][]
-  ): Promise<WriteContractReturnType | Error> {
+  ): Promise<ReadContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -573,7 +574,7 @@ export class OpenDataLibrary {
   async predictRandomForestClassificationOnchainModel(
     modelName: string,
     data: bigint[][]
-  ): Promise<WriteContractReturnType | Error> {
+  ): Promise<ReadContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -581,6 +582,44 @@ export class OpenDataLibrary {
       return this.odlContract.read.predictRandomForestClassificationOnchainModel(
         [modelName, data]
       );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  getCidBytes(cidInput: string) {
+    // Create a CID object
+    const cid: any = new CID(cidInput);
+
+    // Extract the bytes
+    const bytes = cid.bytes;
+
+    const result = Array.from(bytes, (byte: any) =>
+      byte.toString(16).padStart(2, "0")
+    ).join("");
+
+    return result;
+  }
+
+  /**
+   * Function to extract Cid data into matrix
+   * @param cidInput - content CID
+   * @returns
+   */
+  async extractCidData(
+    cidInput: string
+  ): Promise<ReadContractReturnType | Error> {
+    try {
+      // Create a CID object
+      const cid: any = new CID(cidInput);
+
+      // Extract the bytes
+      const bytes = cid.bytes;
+
+      const input = Array.from(bytes, (byte: any) =>
+        byte.toString(16).padStart(2, "0")
+      ).join("");
+      return this.odlContract.read.extractCidData([input]);
     } catch (e) {
       throw new Error(String(e));
     }
