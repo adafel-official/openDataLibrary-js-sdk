@@ -257,14 +257,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainLinearRegressionFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -336,14 +336,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainLogisticRegressionFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -415,14 +415,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainKNNRegressionFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -494,14 +494,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainKNNClassificationFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -573,14 +573,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainDecisionTreeRegressionFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -652,14 +652,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainDecisionTreeClassificationFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -730,14 +730,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainRandomForestRegressionFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
@@ -809,14 +809,14 @@ export class OpenDataLibrary {
    * @param train_indices - column indices to be included in training set
    * @param label_index - label index
    * @param modelName - modelname
-   * @returns
+   * @returns {Promise<WriteContractReturnType | Error>} The result of the contract write operation.
    */
   async trainRandomForestClassificationFromCid(
     cidInput: string,
     train_indices: Array<bigint>,
     label_index: bigint,
     modelName: string
-  ) {
+  ): Promise<WriteContractReturnType | Error> {
     try {
       const account = await this.getAccount();
       await this.swithChain();
