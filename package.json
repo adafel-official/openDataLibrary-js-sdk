@@ -32,10 +32,13 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@pinata/sdk": "^2.1.0",
     "@types/dataframe-js": "^1.4.3",
+    "@types/uuid": "^10.0.0",
     "cids": "^1.1.9",
     "dataframe-js": "^1.4.4",
-    "tslib": "^2.6.2"
+    "tslib": "^2.6.2",
+    "uuid": "^10.0.0"
   },
   "peerDependencies": {
     "viem": ">=2.0.0"

@@ -17,6 +17,8 @@ import { ODLClientOptions } from "./types";
 import abiJson from "./abi/ODL.json";
 import DataFrame from "dataframe-js";
 import CID from "cids";
+import pinataSDK from "@pinata/sdk";
+import { v4 as uuidv4 } from "uuid";
 
 export enum Category {
   Gaming = 0,
@@ -35,17 +37,26 @@ export class OpenDataLibrary {
   public walletClient: WalletClient;
   public publicClient!: PublicClient;
   public odlContract: any;
-  public privateKeyAccount?: PrivateKeyAccount;
+  private privateKeyAccount?: PrivateKeyAccount;
   public chain: any;
   public account!: { address: `0x${string}` };
+  private pinataApiKey: string;
+  private pinataSecretApiKey: string;
 
   /**
    * Creates an instance of OpenDataLibrary.
    * @param {ODLClientOptions} options - Options to initialize the library.
    */
-  constructor({ rpcUrl: rpc, account: privateKeyAccount }: ODLClientOptions) {
+  constructor({
+    rpcUrl: rpc,
+    account: privateKeyAccount,
+    chainId: chainId,
+    pinataApiKey: pinataApiKey,
+    pinataSecretApiKey: pinataSecretApiKey,
+    contractAddress: contractAddress,
+  }: ODLClientOptions) {
     const chain = {
-      id: 2891731878337135,
+      id: chainId ?? 3995596960668836,
       name: "Adafel Testnet Network",
       nativeCurrency: {
         name: "Adafel Token",
@@ -54,7 +65,7 @@ export class OpenDataLibrary {
       },
       rpcUrls: {
         default: {
-          http: ["https://testnet-rpc.adafel.com"],
+          http: [rpc ?? "https://testnet-rpc.adafel.com"],
         },
       },
     };
@@ -75,9 +86,11 @@ export class OpenDataLibrary {
     this.privateKeyAccount = privateKeyAccount;
     this.odlContract = getContract({
       abi: abiJson.abi,
-      address: "0xb67a0654de4a747F51e1298B17eb6D88539Eda20",
+      address: contractAddress ?? "0x91f78FBEB6c5C29981aFBAB1B20037213E1Ecbc7",
       client: { wallet: this.walletClient, public: this.publicClient },
     });
+    this.pinataApiKey = pinataApiKey ?? "";
+    this.pinataSecretApiKey = pinataSecretApiKey ?? "";
   }
 
   /**
@@ -109,6 +122,28 @@ export class OpenDataLibrary {
       );
 
       return [input_data, labels_formatted];
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  public async uploadCidDataToIPFS(csvPath: string): Promise<string | Error> {
+    try {
+      let data = await DataFrame.fromCSV(csvPath);
+      let input_array = data.toArray();
+      input_array = input_array.map((row) =>
+        row.map((col: number) => Math.round(col * 10000))
+      );
+
+      const options = {
+        pinataMetadata: {
+          name: uuidv4(),
+        },
+      };
+
+      const pinata = new pinataSDK(this.pinataApiKey, this.pinataSecretApiKey);
+      const res = await pinata.pinJSONToIPFS(input_array, options);
+      return res.IpfsHash;
     } catch (e) {
       throw new Error(String(e));
     }
@@ -217,6 +252,35 @@ export class OpenDataLibrary {
   }
 
   /**
+   * train Linear Regression from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainLinearRegressionFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainLinearRegressionCidData(
+        [cidInput, train_indices, label_index, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
    * Makes a prediction using a linear regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
@@ -257,6 +321,35 @@ export class OpenDataLibrary {
 
       return this.odlContract.write.trainLogisticRegressionOffChainData(
         [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
+   * train Logistic Regression from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainLogisticRegressionFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainLogisticRegressionCidData(
+        [cidInput, train_indices, label_index, modelName],
         {
           account: account,
         }
@@ -317,6 +410,35 @@ export class OpenDataLibrary {
   }
 
   /**
+   * train KNN Regression from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainKNNRegressionFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainKNNRegressionCidData(
+        [cidInput, train_indices, label_index, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
    * Makes a prediction using a KNN regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
@@ -357,6 +479,35 @@ export class OpenDataLibrary {
 
       return this.odlContract.write.trainKNNClassificationOffChainData(
         [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
+   * train KNN Classification from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainKNNClassificationFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainKNNClassificationCidData(
+        [cidInput, train_indices, label_index, modelName],
         {
           account: account,
         }
@@ -417,6 +568,35 @@ export class OpenDataLibrary {
   }
 
   /**
+   * train Decision Tree Regression from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainDecisionTreeRegressionFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainDecisionTreeRegressionCidData(
+        [cidInput, train_indices, label_index, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
    * Makes a prediction using a decision tree regression model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
@@ -467,6 +647,35 @@ export class OpenDataLibrary {
   }
 
   /**
+   * train Decision Tree Classification from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainDecisionTreeClassificationFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainDecisionTreeClassificationCidData(
+        [cidInput, train_indices, label_index, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
    * Makes a prediction using a decision tree classification model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
@@ -506,6 +715,35 @@ export class OpenDataLibrary {
 
       return this.odlContract.write.trainRandomForestRegressionOffChainData(
         [data, label, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
+   * train Random Forest Regression from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainRandomForestRegressionFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainRandomForestRegressionCidData(
+        [cidInput, train_indices, label_index, modelName],
         {
           account: account,
         }
@@ -566,6 +804,35 @@ export class OpenDataLibrary {
   }
 
   /**
+   * train Random Forest Classification from Cid
+   * @param cidInput - cid
+   * @param train_indices - column indices to be included in training set
+   * @param label_index - label index
+   * @param modelName - modelname
+   * @returns
+   */
+  async trainRandomForestClassificationFromCid(
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint,
+    modelName: string
+  ) {
+    try {
+      const account = await this.getAccount();
+      await this.swithChain();
+
+      return this.odlContract.write.trainRandomForestClassificationCidData(
+        [cidInput, train_indices, label_index, modelName],
+        {
+          account: account,
+        }
+      );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
    * Makes a prediction using a random forest classification model stored on-chain.
    * @param {string} modelName - The name of the model.
    * @param {bigint[][]} data - The data for prediction.
@@ -604,10 +871,14 @@ export class OpenDataLibrary {
   /**
    * Function to extract Cid data into matrix
    * @param cidInput - content CID
+   * @param train_indices - array of training column indices
+   * @param label_index - label index
    * @returns
    */
   async extractCidData(
-    cidInput: string
+    cidInput: string,
+    train_indices: Array<bigint>,
+    label_index: bigint
   ): Promise<ReadContractReturnType | Error> {
     try {
       // Create a CID object
@@ -619,7 +890,11 @@ export class OpenDataLibrary {
       const input = Array.from(bytes, (byte: any) =>
         byte.toString(16).padStart(2, "0")
       ).join("");
-      return this.odlContract.read.extractCidData([input]);
+      return this.odlContract.read.extractCidData([
+        input,
+        train_indices,
+        label_index,
+      ]);
     } catch (e) {
       throw new Error(String(e));
     }
