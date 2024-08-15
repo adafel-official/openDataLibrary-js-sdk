@@ -1,6 +1,6 @@
 {
   "name": "@adafel/opendatalibrary-js-sdk",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Typescript sdk for interaction with Open Data Library protocol. ",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
@@ -27,6 +27,7 @@
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "0.4.4",
     "rollup": "^4.17.2",
     "rollup-plugin-typescript2": "^0.36.0",
     "typescript": "^5.3.3"
@@ -36,6 +37,7 @@
     "@types/dataframe-js": "^1.4.3",
     "@types/uuid": "^10.0.0",
     "cids": "^1.1.9",
+    "csv-parse": "^5.5.6",
     "dataframe-js": "^1.4.4",
     "tslib": "^2.6.2",
     "uuid": "^10.0.0"

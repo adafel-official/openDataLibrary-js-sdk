@@ -8,5 +8,5 @@ export type ODLClientOptions = {
   chainId?: number;
   pinataApiKey?: string;
   pinataSecretApiKey?: string;
-  contractAddress?: `0x{string}`;
+  contractAddress?: `0x${string}`;
 };

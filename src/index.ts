@@ -12,13 +12,15 @@ import {
   WriteContractReturnType,
   Address,
   ReadContractReturnType,
+  TransactionReceipt,
 } from "viem";
 import { ODLClientOptions } from "./types";
 import abiJson from "./abi/ODL.json";
-import DataFrame from "dataframe-js";
+import { DataFrame } from "dataframe-js";
 import CID from "cids";
 import pinataSDK from "@pinata/sdk";
 import { v4 as uuidv4 } from "uuid";
+import { parse } from "csv-parse/sync";
 
 export enum Category {
   Gaming = 0,
@@ -95,18 +97,23 @@ export class OpenDataLibrary {
 
   /**
    * Reads data from a CSV file and formats it.
-   * @param {string} csvPath - Path to the CSV file.
+   * @param {string} csvBuffer - Buffer of the CSV file.
    * @param {string[]} inputColumns - Columns to be used as input.
    * @param {string} labelColumn - Column to be used as label.
    * @returns {Promise<[bigint[][], bigint[]]>} Formatted input data and labels.
    */
   public async getDataFromCSV(
-    csvPath: string,
+    csvBuffer: any,
     inputColumns: string[],
     labelColumn: string
   ): Promise<[bigint[][], bigint[]] | Error> {
     try {
-      let data = await DataFrame.fromCSV(csvPath);
+      let parsedOutput = parse(csvBuffer, {
+        bom: true,
+        cast: true,
+        columns: true,
+      });
+      let data = new DataFrame(parsedOutput);
       let input = data.select(...inputColumns);
       let labels = data.select(labelColumn);
       let input_data = input.toArray();
@@ -127,9 +134,14 @@ export class OpenDataLibrary {
     }
   }
 
-  public async uploadCidDataToIPFS(csvPath: string): Promise<string | Error> {
+  public async uploadCidDataToIPFS(csvBuffer: any): Promise<string | Error> {
     try {
-      let data = await DataFrame.fromCSV(csvPath);
+      let parsedOutput = parse(csvBuffer, {
+        bom: true,
+        cast: true,
+        columns: true,
+      });
+      let data = new DataFrame(parsedOutput);
       let input_array = data.toArray();
       input_array = input_array.map((row) =>
         row.map((col: number) => Math.round(col * 10000))
@@ -849,6 +861,26 @@ export class OpenDataLibrary {
       return this.odlContract.read.predictRandomForestClassificationOnchainModel(
         [modelName, data]
       );
+    } catch (e) {
+      throw new Error(String(e));
+    }
+  }
+
+  /**
+   * Returns transaction receipt after waiting for 3 confirmations
+   * @param hash transaction hash
+   * @returns {Promise<TransactionReceipt | Error>} The transaction receipt
+   */
+  async waitForTransaction(
+    hash: `0x${string}`
+  ): Promise<TransactionReceipt | Error> {
+    try {
+      const transaction = await this.publicClient.waitForTransactionReceipt({
+        confirmations: 3,
+        hash: hash,
+      });
+
+      return transaction;
     } catch (e) {
       throw new Error(String(e));
     }

@@ -22,10 +22,10 @@ npm i @adafel/opendatalibrary-js-sdk
 
 1. Initialize the client instance
 
-```
-import { privateKeyToAccount } from 'viem/accounts';
+```javascript
+import { privateKeyToAccount } from "viem/accounts";
 import { OpenDataLibrary, Category } from "@adafel/opendatalibrary-js-sdk";
-const privateKey = '0xabc'; // optional
+const privateKey = "0xabc"; // optional
 
 const client = new OpenDataLibrary({
   account: privateKeyToAccount(privateKey), // optional
